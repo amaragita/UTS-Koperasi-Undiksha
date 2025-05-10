@@ -87,6 +87,7 @@ class MutasiPage extends StatelessWidget {
     );
   }
 
+  /// Mengembalikan keterangan transaksi berdasarkan jenisnya
   String _getKeteranganTransaksi(String jenis) {
     switch (jenis) {
       case 'transfer':

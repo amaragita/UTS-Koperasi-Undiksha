@@ -76,9 +76,9 @@ class _DepositoPageState extends State<DepositoPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Tutup bottom sheet
+                  Navigator.pop(context);
                   if (popToHome && success) {
-                    Navigator.pop(context); // Kembali ke HomePage
+                    Navigator.pop(context);
                   }
                 },
                 style: ElevatedButton.styleFrom(

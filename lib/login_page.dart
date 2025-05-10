@@ -13,7 +13,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus(); // Periksa apakah pengguna sudah login
+    _checkLoginStatus();
   }
 
   Future<void> _checkLoginStatus() async {

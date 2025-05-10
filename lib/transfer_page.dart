@@ -27,7 +27,7 @@ class _TransferPageState extends State<TransferPage> {
       return;
     }
 
-    // Validasi saldo
+    // Untuk Validasi saldo
     try {
       saldoProvider.kurangiSaldo(jumlah); // Kurangi saldo melalui Provider
       final formattedJumlah = FormatHelper.formatCurrency(jumlah);

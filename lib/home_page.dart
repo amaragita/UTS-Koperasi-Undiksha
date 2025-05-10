@@ -30,7 +30,6 @@ class _HomePageState extends State<HomePage> {
   String? _username;
 
   Future<void> _logout() async {
-    // Tampilkan dialog konfirmasi
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
