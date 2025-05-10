@@ -21,3 +21,4 @@ class FormatHelper {
     return double.tryParse(cleanAmount) ?? 0;
   }
 } 
+
