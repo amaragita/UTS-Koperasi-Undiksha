@@ -134,7 +134,7 @@ class _LoginPageState extends State<LoginPage> {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: Text('Daftar Mbanking', style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold)),
+                          title: Text('Daftar Keanggotaan', style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold)),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -209,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       );
                     },
-                    child: Text('Daftar Mbanking', style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold)),
+                    child: Text('Daftar Keanggotaan', style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.bold)),
                   ),
                   TextButton(
                     onPressed: () {

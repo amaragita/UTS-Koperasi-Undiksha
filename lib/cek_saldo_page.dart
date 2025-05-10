@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'saldo_provider.dart';
+import 'utils/format_helper.dart';
 
 class CekSaldoPage extends StatelessWidget {
   @override
@@ -46,7 +47,7 @@ class CekSaldoPage extends StatelessWidget {
                 ),
                 SizedBox(height: 10),
                 Text(
-                  'Rp. ${saldoProvider.saldo.toStringAsFixed(0)}',
+                  FormatHelper.formatCurrency(saldoProvider.saldo),
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

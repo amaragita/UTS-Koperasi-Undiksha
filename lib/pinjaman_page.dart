@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'saldo_provider.dart';
+import 'utils/format_helper.dart';
+import 'utils/currency_input_formatter.dart';
 
 class PinjamanPage extends StatefulWidget {
   @override
@@ -13,7 +15,7 @@ class _PinjamanPageState extends State<PinjamanPage> {
 
   void _ajukanPinjaman() {
     final saldoProvider = Provider.of<SaldoProvider>(context, listen: false);
-    final jumlahPinjaman = double.tryParse(_loanAmountController.text) ?? 0;
+    final jumlahPinjaman = FormatHelper.parseCurrency(_loanAmountController.text);
     final jangkaWaktu = _loanDurationController.text.trim();
 
     if (jumlahPinjaman <= 0 || jangkaWaktu.isEmpty) {
@@ -118,7 +120,7 @@ class _PinjamanPageState extends State<PinjamanPage> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Rp. ${saldoProvider.saldo.toStringAsFixed(0)}',
+                      FormatHelper.formatCurrency(saldoProvider.saldo),
                       style: TextStyle(fontSize: 20, color: Colors.blue[800], fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 16),
@@ -151,6 +153,9 @@ class _PinjamanPageState extends State<PinjamanPage> {
                         ),
                       ),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyInputFormatter(),
+                      ],
                     ),
                     SizedBox(height: 16),
                     Text('Jangka Waktu', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800])),

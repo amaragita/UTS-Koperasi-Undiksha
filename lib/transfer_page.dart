@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'saldo_provider.dart';
+import 'utils/format_helper.dart';
+import 'utils/currency_input_formatter.dart';
 
 class TransferPage extends StatefulWidget {
   final String username;
@@ -18,7 +19,7 @@ class _TransferPageState extends State<TransferPage> {
 
   void _transferSaldo() {
     final saldoProvider = Provider.of<SaldoProvider>(context, listen: false);
-    final jumlah = double.tryParse(_jumlahController.text.replaceAll(',', '').replaceAll('.', '')) ?? 0;
+    final jumlah = FormatHelper.parseCurrency(_jumlahController.text);
     final rekening = _rekeningController.text.trim();
 
     if (jumlah <= 0 || rekening.isEmpty) {
@@ -29,11 +30,7 @@ class _TransferPageState extends State<TransferPage> {
     // Validasi saldo
     try {
       saldoProvider.kurangiSaldo(jumlah); // Kurangi saldo melalui Provider
-      final formattedJumlah = NumberFormat.currency(
-        locale: 'id_ID',
-        symbol: 'Rp ',
-        decimalDigits: 2,
-      ).format(jumlah);
+      final formattedJumlah = FormatHelper.formatCurrency(jumlah);
 
       // Tampilkan konfirmasi sukses dengan bottom sheet/card
       showModalBottomSheet(
@@ -53,7 +50,7 @@ class _TransferPageState extends State<TransferPage> {
               Text('Anda telah mentransfer', style: TextStyle(fontSize: 15)),
               SizedBox(height: 4),
               Text(
-                '$formattedJumlah',
+                formattedJumlah,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.blue[800]),
               ),
               SizedBox(height: 4),
@@ -206,7 +203,7 @@ class _TransferPageState extends State<TransferPage> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Rp. ${saldoProvider.saldo.toStringAsFixed(0)}',
+                      FormatHelper.formatCurrency(saldoProvider.saldo),
                       style: TextStyle(fontSize: 20, color: Colors.blue[800], fontWeight: FontWeight.bold),
                     ),
                     SizedBox(height: 16),
@@ -231,6 +228,9 @@ class _TransferPageState extends State<TransferPage> {
                     TextField(
                       controller: _jumlahController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyInputFormatter(),
+                      ],
                       decoration: InputDecoration(
                         labelText: 'Jumlah Transfer',
                         labelStyle: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.w600),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'saldo_provider.dart';
+import 'utils/format_helper.dart';
 
 class MutasiPage extends StatelessWidget {
   @override
@@ -60,7 +61,7 @@ class MutasiPage extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '${isPengurangan ? '-' : '+'} Rp. ${item['jumlah'].toStringAsFixed(0)}',
+                              '${isPengurangan ? '-' : '+'} ${FormatHelper.formatCurrency(item['jumlah'])}',
                               style: TextStyle(
                                 color: isPengurangan ? Colors.red : Colors.green,
                                 fontWeight: FontWeight.bold,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'saldo_provider.dart';
+import 'utils/format_helper.dart';
+import 'utils/currency_input_formatter.dart';
 
 class PembayaranPage extends StatefulWidget {
   final String username;
@@ -61,7 +63,7 @@ class _PembayaranPageState extends State<PembayaranPage> {
                         children: [
                           Text('Saldo Anda sekarang:', style: TextStyle(fontSize: 15, color: Colors.blue[800], fontWeight: FontWeight.w600)),
                           SizedBox(height: 4),
-                          Text('Rp. ${saldoProvider.saldo.toStringAsFixed(0)}', style: TextStyle(fontSize: 20, color: Colors.blue[800], fontWeight: FontWeight.bold)),
+                          Text(FormatHelper.formatCurrency(saldoProvider.saldo), style: TextStyle(fontSize: 20, color: Colors.blue[800], fontWeight: FontWeight.bold)),
                           SizedBox(height: 16),
                         ],
                       ),
@@ -136,6 +138,9 @@ class _PembayaranPageState extends State<PembayaranPage> {
                         ),
                       ),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyInputFormatter(),
+                      ],
                     ),
                     SizedBox(height: 20),
                     SizedBox(
@@ -168,7 +173,7 @@ class _PembayaranPageState extends State<PembayaranPage> {
 
   void _bayar() {
     final saldoProvider = Provider.of<SaldoProvider>(context, listen: false);
-    final jumlahPembayaran = double.tryParse(_amountController.text) ?? 0;
+    final jumlahPembayaran = FormatHelper.parseCurrency(_amountController.text);
     final nomorTagihan = _billNumberController.text;
 
     if (_selectedJenisPembayaran == null) {

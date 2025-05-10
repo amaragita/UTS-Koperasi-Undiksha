@@ -11,6 +11,7 @@ import 'mutasi_page.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'utils/format_helper.dart';
 
 class HomePage extends StatefulWidget {
   final String? username;
@@ -176,6 +177,21 @@ class _HomePageState extends State<HomePage> {
                 image: NetworkImage(
                   'https://raw.githubusercontent.com/amaragita/Tugas-Layout-1/main/Foto%204x6.png'),
                 fit: BoxFit.cover,
+                onError: (exception, stackTrace) {},
+              ),
+            ),
+            child: ClipOval(
+              child: Image.network(
+                'https://raw.githubusercontent.com/amaragita/Tugas-Layout-1/main/Foto%204x6.png',
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 60,
+                  height: 60,
+                  color: Colors.white,
+                  child: Icon(Icons.person, size: 32, color: Colors.grey[400]),
+                ),
               ),
             ),
           ),
@@ -206,18 +222,19 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   children: [
                     Text(
-                      'Rp ',
+                      'Rp',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    SizedBox(width: 4),
                     Consumer<SaldoProvider>(
                       builder: (context, saldoProvider, child) {
                         return Text(
                           _saldoVisible
-                              ? saldoProvider.saldo.toStringAsFixed(0)
+                              ? FormatHelper.formatCurrency(saldoProvider.saldo).replaceFirst('Rp ', '')
                               : '*******',
                           style: TextStyle(
                             color: Colors.white,

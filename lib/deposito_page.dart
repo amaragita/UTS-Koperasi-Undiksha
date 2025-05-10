@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'saldo_provider.dart';
+import 'utils/format_helper.dart';
+import 'utils/currency_input_formatter.dart';
 
 class DepositoPage extends StatefulWidget {
   @override
@@ -21,7 +23,7 @@ class _DepositoPageState extends State<DepositoPage> {
 
   void _simpanDeposito() {
     final saldoProvider = Provider.of<SaldoProvider>(context, listen: false);
-    final jumlah = double.tryParse(_amountController.text.replaceAll(',', '').replaceAll('.', '')) ?? 0;
+    final jumlah = FormatHelper.parseCurrency(_amountController.text);
     final token = _tokenController.text.trim();
     if (_sumberDana == null || _selectedDuration == null || jumlah <= 0 || token.isEmpty) {
       _showBottomSheet('Harap lengkapi semua data!', false);
@@ -133,7 +135,7 @@ class _DepositoPageState extends State<DepositoPage> {
                         children: [
                           Text('Saldo Anda sekarang:', style: TextStyle(fontSize: 15, color: Colors.blue[800], fontWeight: FontWeight.w600)),
                           SizedBox(height: 4),
-                          Text('Rp. ${saldoProvider.saldo.toStringAsFixed(0)}', style: TextStyle(fontSize: 20, color: Colors.blue[800], fontWeight: FontWeight.bold)),
+                          Text(FormatHelper.formatCurrency(saldoProvider.saldo), style: TextStyle(fontSize: 20, color: Colors.blue[800], fontWeight: FontWeight.bold)),
                           SizedBox(height: 16),
                         ],
                       ),
@@ -192,6 +194,9 @@ class _DepositoPageState extends State<DepositoPage> {
                         ),
                       ),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        CurrencyInputFormatter(),
+                      ],
                     ),
                     SizedBox(height: 16),
                     Text('Token', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800])),
