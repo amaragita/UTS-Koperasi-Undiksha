@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 
 class QrCodePage extends StatefulWidget {
   @override
@@ -6,250 +9,178 @@ class QrCodePage extends StatefulWidget {
 }
 
 class _QrCodePageState extends State<QrCodePage> {
-  int _selectedTab = 0; // 0: Scan QR, 1: Kode Bayar, 2: Terima Dana
-  final String _rekening = '1708938402';
-  final TextEditingController _passwordController = TextEditingController();
+  String? _scannedCode;
+  bool _isScanning = true;
+  bool _flashOn = false;
+  final MobileScannerController _controller = MobileScannerController();
+
+  void _onDetect(BarcodeCapture capture) {
+    if (!_isScanning) return;
+    final code = capture.barcodes.first.rawValue;
+    if (code != null) {
+      setState(() {
+        _scannedCode = code;
+        _isScanning = false;
+      });
+      _controller.stop();
+    }
+  }
+
+  void _startScan() {
+    setState(() {
+      _scannedCode = null;
+      _isScanning = true;
+    });
+    _controller.start();
+  }
+
+  Future<void> _toggleFlash() async {
+    await _controller.toggleTorch();
+    setState(() {
+      _flashOn = !_flashOn;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      try {
+        final result = await _controller.analyzeImage(pickedFile.path);
+        if (result != null) {
+          final List<Barcode> barcodes = result as List<Barcode>;
+          if (barcodes.isNotEmpty) {
+            final barcode = barcodes.first;
+            if (barcode.rawValue != null) {
+              setState(() {
+                _scannedCode = barcode.rawValue;
+                _isScanning = false;
+              });
+              _controller.stop();
+              return;
+            }
+          }
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('QR Code tidak ditemukan di gambar')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan saat memproses gambar')),
+        );
+      }
+    }
+  }
+
+  Widget _buildResult() {
+    if (_scannedCode == null) {
+      return Text(
+        'Arahkan kamera ke QR Code',
+        style: TextStyle(fontSize: 16, color: Colors.blue[800]),
+      );
+    }
+    final uri = Uri.tryParse(_scannedCode!);
+    final isUrl = uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Hasil Scan:',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800]),
+        ),
+        SizedBox(height: 8),
+        isUrl
+            ? InkWell(
+                onTap: () async {
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Text(
+                  _scannedCode!,
+                  style: TextStyle(
+                    color: Colors.blue[800],
+                    decoration: TextDecoration.underline,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            : Text(
+                _scannedCode!,
+                style: TextStyle(fontSize: 16, color: Colors.black87),
+                textAlign: TextAlign.center,
+              ),
+        SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _startScan,
+          child: Text(
+            'Scan Lagi',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[800],
+            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text('QR Code Scanner', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue[800],
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Scan QR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         centerTitle: true,
-        actions: [SizedBox(width: 16)],
+        iconTheme: IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: Icon(_flashOn ? Icons.flash_on : Icons.flash_off, color: Colors.white),
+            onPressed: _toggleFlash,
+            tooltip: 'Flash',
+          ),
+          IconButton(
+            icon: Icon(Icons.photo, color: Colors.white),
+            onPressed: _pickImage,
+            tooltip: 'Scan dari Galeri',
+          ),
+        ],
       ),
       backgroundColor: Colors.white,
-      body: Stack(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Column(
-            children: [
-              SizedBox(height: 24),
-              Text(
-                'Scan QR atau\nbarcode untuk memulai transaksi',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.blue[800], fontWeight: FontWeight.w500),
-              ),
-              SizedBox(height: 24),
-              if (_selectedTab == 2)
-                // Terima Dana: tampilkan QR code besar
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: 220,
-                      height: 220,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
-                      ),
-                      child: Icon(Icons.qr_code, size: 180, color: Colors.blue[800]),
-                    ),
-                  ),
-                )
-              else if (_selectedTab == 1)
-                // Kode Bayar: form rekening & password transaksi
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: 320,
-                      padding: EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Rekening', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800])),
-                          SizedBox(height: 6),
-                          TextField(
-                            readOnly: true,
-                            controller: TextEditingController(text: _rekening),
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue[800]!, width: 2),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue[800]!, width: 1.5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue[800]!, width: 2),
-                              ),
-                            ),
-                            style: TextStyle(color: Colors.blue[800], fontWeight: FontWeight.w600),
-                          ),
-                          SizedBox(height: 18),
-                          Text('Password Transaksi', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800])),
-                          SizedBox(height: 6),
-                          TextField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            decoration: InputDecoration(
-                              labelText: 'Masukkan password transaksi',
-                              labelStyle: TextStyle(color: Colors.blue[800]),
-                              border: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue[800]!, width: 2),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue[800]!, width: 1.5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue[800]!, width: 2),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue[800],
-                                padding: EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Text('Bayar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
-              else
-                // Area kamera dummy dengan grid biru
-                Expanded(
-                  child: Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 320,
-                          height: 320,
-                          decoration: BoxDecoration(
-                            color: Colors.blue[800]!.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: _GridPainter(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              SizedBox(height: 24),
-              // Bottom nav
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    _buildTabButton('Scan QR', 0),
-                    _buildTabButton('Kode Bayar', 1),
-                    _buildTabButton('Terima Dana', 2),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          // Logo QRIS kiri bawah
-          Positioned(
-            left: 20,
-            bottom: 80,
-            child: Image.asset(
-              'assets/qris_logo.png',
-              width: 60,
-              height: 28,
-              errorBuilder: (c, e, s) => SizedBox.shrink(),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            height: 300,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.blue[800]!, width: 2),
+              borderRadius: BorderRadius.circular(16),
             ),
+            child: _isScanning
+                ? MobileScanner(
+                    controller: _controller,
+                    onDetect: _onDetect,
+                  )
+                : Center(child: Icon(Icons.qr_code_2, size: 80, color: Colors.blue[800])),
           ),
-          // Dua tombol bulat kanan bawah hanya di Scan QR
-          if (_selectedTab == 0)
-            Positioned(
-              right: 30,
-              bottom: 90,
-              child: Column(
-                children: [
-                  _circleButton(Icons.flash_on, Colors.blue[800]!),
-                  SizedBox(height: 12),
-                  _circleButton(Icons.image, Colors.blue[800]!),
-                ],
-              ),
-            ),
+          SizedBox(height: 24),
+          _buildResult(),
         ],
       ),
     );
   }
-
-  Widget _buildTabButton(String label, int idx) {
-    final bool active = _selectedTab == idx;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedTab = idx),
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 4),
-          padding: EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: active ? Colors.blue[800] : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.blue[800]!, width: 1.5),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              color: active ? Colors.white : Colors.blue[800],
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _circleButton(IconData icon, Color color) {
-    return Material(
-      color: color.withOpacity(0.15),
-      shape: CircleBorder(),
-      child: InkWell(
-        customBorder: CircleBorder(),
-        onTap: () {},
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Icon(icon, color: color, size: 26),
-        ),
-      ),
-    );
-  }
-}
-
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.blue[800]!.withOpacity(0.7)
-      ..strokeWidth = 1;
-    // Horizontal lines
-    for (double y = 0; y < size.height; y += 16) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-    // Vertical lines
-    for (double x = 0; x < size.width; x += 16) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
